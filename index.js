@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const { spawn } = require('child_process');
 const tapJsonParser = require('tap-json');
 const { Readable } = require('stream');
@@ -9,9 +7,7 @@ const { log } = console;
 const { EOL } = require('os');
 const fs = require('fs');
 
-return main();
-
-function main() {
+function run() {
   const ts = Date.now();
   const count = process.argv[2] || 1;
   const filter = process.argv[3] || '';
@@ -312,3 +308,5 @@ function humanDuration(duration) {
   else if (s) return `${fs}s ${fms}ms`;
   return `${fms}ms`;
 }
+
+module.exports = { run };
