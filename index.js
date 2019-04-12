@@ -27,25 +27,30 @@ function main() {
       process.stdout.clearLine();
       process.stdout.cursorTo(0);
     }
-    process.stdout.write(`Running... (${reporter.current}/${count}) ${humanDuration(Date.now() - ts)}`);
+    process.stdout.write(
+      `Running... (${reporter.current}/${count}) ${humanDuration(Date.now() - ts)}`
+    );
   }, 1000);
-  return serial(count, () => runTests(filter), reporter).then(runs => {
-    clearInterval(spinner);
-    if (process.stdout.isTTY) {
-      process.stdout.clearLine();
-      process.stdout.cursorTo(0);
-    }
-    return Promise.all(runs.map(run => asJson(run.stdout)));
-  }).then(json => {
-    json.forEach(addMetadata);
-    const aggregation = aggregateTimings(json);
-    fs.writeFileSync(`./test-timings-${ts}`, getComplete(aggregation));
-    printSummary(aggregation);
-    log('');
-    log(chalk.bold(`Full audit written to file ./test-timings-${ts}`));
-  }).catch(err => {
-    log('Bad exit: ', err);
-  });
+  return serial(count, () => runTests(filter), reporter)
+    .then(runs => {
+      clearInterval(spinner);
+      if (process.stdout.isTTY) {
+        process.stdout.clearLine();
+        process.stdout.cursorTo(0);
+      }
+      return Promise.all(runs.map(run => asJson(run.stdout)));
+    })
+    .then(json => {
+      json.forEach(addMetadata);
+      const aggregation = aggregateTimings(json);
+      fs.writeFileSync(`./test-timings-${ts}`, getComplete(aggregation));
+      printSummary(aggregation);
+      log('');
+      log(chalk.bold(`Full audit written to file ./test-timings-${ts}`));
+    })
+    .catch(err => {
+      log('Bad exit: ', err);
+    });
 }
 
 function all(promises, cb) {
@@ -56,7 +61,7 @@ function all(promises, cb) {
     if (returns.length >= total) {
       cb(returns);
     }
-  }
+  };
   promises.forEach(p => {
     p.then(handler).catch(handler);
   });
@@ -68,8 +73,8 @@ function runTests(filter) {
     // const runner = spawn('cat', ['out']);
     const stdout = [];
     const stderr = [];
-    runner.stdout.on('data',  d => stdout.push(d.toString()));
-    runner.stderr.on('data',  d => stder.push(d.toString()));
+    runner.stdout.on('data', d => stdout.push(d.toString()));
+    runner.stderr.on('data', d => stderr.push(d.toString()));
     runner.on('exit', () => resolve({ stdout: stdout.join(''), stderr: stderr.join('') }));
   });
 }
@@ -89,14 +94,14 @@ function asJson(tapOutput) {
     const chunks = [];
     json.on('data', chunk => {
       chunks.push(chunk);
-    })
+    });
 
     stream.on('end', () => {
       resolve(chunks);
-    })
+    });
     stream.on('error', err => {
       reject(err);
-    })
+    });
   });
 }
 
@@ -129,7 +134,9 @@ function aggregateTimings(tapJson) {
     joined = Object.values(groupBy(joined, 'id')).map(mergeAssertions);
   }
   const timings = { all: joined, modules: groupBy(joined, 'module') };
-  timings.modules = Object.keys(timings.modules).map(key => rollupModule(key, timings.modules[key]));
+  timings.modules = Object.keys(timings.modules).map(key =>
+    rollupModule(key, timings.modules[key])
+  );
   return timings;
 }
 
@@ -151,7 +158,7 @@ function mergeAssertions(assertions) {
 function rollupModule(name, tests) {
   const stats = Object.assign(statsFor(tests), {
     module: name,
-    tests
+    tests,
   });
 
   stats.avg = Math.round(stats.duration / tests.length);
@@ -167,9 +174,13 @@ function statsFor(tests) {
   };
 
   tests.forEach(a => {
-    if (a.passes > 0 && a.failures > 0) { stats.flaky++; }
-    else if (a.passes > 0) { stats.passes++; }
-    else { stats.failures++; }
+    if (a.passes > 0 && a.failures > 0) {
+      stats.flaky++;
+    } else if (a.passes > 0) {
+      stats.passes++;
+    } else {
+      stats.failures++;
+    }
     stats.duration += a.avg;
   });
 
@@ -180,34 +191,51 @@ function printSummary(aggregation) {
   const stats = statsFor(aggregation.all);
 
   let details = '';
-  if (stats.flaky && stats.failures) { details = ` (${withCommas(stats.failures)} failures, ${withCommas(stats.flaky)} flaky)`}
-  else if (stats.flaky) { details = ` (${withCommas(stats.flaky)} flaky)`}
-  else if (stats.failures) { details = ` (${withCommas(stats.failures)} failures)`}
+  if (stats.flaky && stats.failures) {
+    details = ` (${withCommas(stats.failures)} failures, ${withCommas(stats.flaky)} flaky)`;
+  } else if (stats.flaky) {
+    details = ` (${withCommas(stats.flaky)} flaky)`;
+  } else if (stats.failures) {
+    details = ` (${withCommas(stats.failures)} failures)`;
+  }
 
   const formattedTotalTests = withCommas(stats.passes + stats.failures + stats.flaky);
   const formattedTotalTime = `${withCommas(stats.duration)}ms (${humanDuration(stats.duration)})`;
-  log(chalk.bold(`Total Tests: ${formattedTotalTests}${details} Total Time: ${formattedTotalTime}`));
+  log(
+    chalk.bold(`Total Tests: ${formattedTotalTests}${details} Total Time: ${formattedTotalTime}`)
+  );
 
   log('');
   log(chalk.bold('Slowest Modules (avg)'));
-  const slowestModules = sortBy(aggregation.modules, ['avg']).reverse().slice(0, 10);
+  const slowestModules = sortBy(aggregation.modules, ['avg'])
+    .reverse()
+    .slice(0, 10);
   slowestModules.forEach(module => {
     let method = 'green';
-    if (module.avg > 800) { method = 'yellow' };
-    if (module.avg > 3000) { method = 'red' };
+    if (module.avg > 800) {
+      method = 'yellow';
+    }
+    if (module.avg > 3000) {
+      method = 'red';
+    }
     const formattedAvg = chalk[method](humanDuration(module.avg));
     const formattedTotal = chalk.bold(humanDuration(module.duration));
     log(`${formattedAvg} avg per test (${formattedTotal} total): ${chalk.gray(module.module)}`);
-  })
-
+  });
 
   log('');
   log(chalk.bold('Slowest Tests (avg)'));
-  const slowestTests = sortBy(aggregation.all, ['avg']).reverse().slice(0, 10);
+  const slowestTests = sortBy(aggregation.all, ['avg'])
+    .reverse()
+    .slice(0, 10);
   slowestTests.forEach(test => {
     let method = 'green';
-    if (test.avg > 1000) { method = 'yellow' };
-    if (test.avg > 5000) { method = 'red' };
+    if (test.avg > 1000) {
+      method = 'yellow';
+    }
+    if (test.avg > 5000) {
+      method = 'red';
+    }
     log(`${chalk[method](humanDuration(test.avg))}: ${chalk.gray(test.name)}`);
   });
 }
@@ -217,9 +245,13 @@ function getComplete(aggregation) {
   const stats = statsFor(aggregation.all);
 
   let details = '';
-  if (stats.flaky && stats.failures) { details = ` (${withCommas(stats.failures)} failures, ${withCommas(stats.flaky)} flaky)`}
-  else if (stats.flaky) { details = ` (${withCommas(stats.flaky)} flaky)`}
-  else if (stats.failures) { details = ` (${withCommas(stats.failures)} failures)`}
+  if (stats.flaky && stats.failures) {
+    details = ` (${withCommas(stats.failures)} failures, ${withCommas(stats.flaky)} flaky)`;
+  } else if (stats.flaky) {
+    details = ` (${withCommas(stats.flaky)} flaky)`;
+  } else if (stats.failures) {
+    details = ` (${withCommas(stats.failures)} failures)`;
+  }
 
   const formattedTotalTests = withCommas(stats.passes + stats.failures + stats.flaky);
   const formattedTotalTime = `${withCommas(stats.duration)}ms (${humanDuration(stats.duration)})`;
@@ -232,7 +264,7 @@ function getComplete(aggregation) {
     const formattedAvg = humanDuration(module.avg);
     const formattedTotal = humanDuration(module.duration);
     file.push(`${formattedAvg} avg per test (${formattedTotal} total): ${module.module}`);
-  })
+  });
 
   file.push('');
   file.push('Tests (avg)');
@@ -251,12 +283,12 @@ async function serial(count, fn, reporter = {}) {
     try {
       const ret = await fn();
       returnValues.push(ret);
-    } catch(err) {
+    } catch (err) {
       log('Failed to perform serial action:', err);
     }
   }
   return returnValues;
-};
+}
 
 function withCommas(number) {
   let str = number.toString();
@@ -277,9 +309,9 @@ function humanDuration(duration) {
   const m = Math.floor(duration / 1000 / 60);
 
   const fs = s < 10 ? `0${s}` : `${s}`;
-  const fms = ms < 10 ? `00${ms}` : ms < 100 ? `0${ms}` : `${ms}`
+  const fms = ms < 10 ? `00${ms}` : ms < 100 ? `0${ms}` : `${ms}`;
 
-  if (m) return `${m}m ${fs}s ${fms}ms`
-  else if (s) return `${fs}s ${fms}ms`
+  if (m) return `${m}m ${fs}s ${fms}ms`;
+  else if (s) return `${fs}s ${fms}ms`;
   return `${fms}ms`;
 }
