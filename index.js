@@ -128,11 +128,8 @@ function addMetadata(tapJson) {
 }
 
 function aggregateTimings(tapJson) {
-  const isAverage = tapJson.length > 1;
   let joined = flatten(tapJson.map(tap => flatten(tap.map(t => t.asserts))));
-  if (isAverage) {
-    joined = Object.values(groupBy(joined, 'id')).map(mergeAssertions);
-  }
+  joined = Object.values(groupBy(joined, 'id')).map(mergeAssertions);
   const timings = { all: joined, modules: groupBy(joined, 'module') };
   timings.modules = Object.keys(timings.modules).map(key =>
     rollupModule(key, timings.modules[key])
