@@ -1,5 +1,5 @@
 {
-  "name": "ember-test-avg",
+  "name": "ember-test-audit",
   "version": "0.1.0",
   "description": "Get an audit report for your Ember.js tests",
   "main": "index.js",
