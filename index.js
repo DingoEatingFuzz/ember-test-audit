@@ -7,10 +7,24 @@ const { log } = console;
 const { EOL } = require('os');
 const fs = require('fs');
 
+const { argv } = require('yargs')
+  .command('$0 [repetitions] [filter]', 'run the test suite and average its times', yargs => {
+    yargs
+      .positional('repetitions', {
+        describe: 'number of times to run the tests suite',
+        default: 1,
+      })
+      .positional('filter', {
+        describe: 'string to filter the tests with',
+        default: '',
+    })
+  })
+  .help();
+
 function run() {
   const ts = Date.now();
-  const count = process.argv[2] || 1;
-  const filter = process.argv[3] || '';
+  const count = argv.repetitions;
+  const filter = argv.filter;
   // console.log(`Starting. Count: ${count} Filter: "${filter}"`);
 
   // Collect the output of N test runs
