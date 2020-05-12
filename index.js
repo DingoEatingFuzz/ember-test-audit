@@ -19,6 +19,10 @@ const { argv } = require('yargs')
         default: '',
     })
   })
+  .option('json', {
+    type: 'boolean',
+    description: 'generate report as JSON instead of text',
+  })
   .help();
 
 function run() {
@@ -53,7 +57,8 @@ function run() {
     .then(json => {
       json.forEach(addMetadata);
       const aggregation = aggregateTimings(json);
-      fs.writeFileSync(`./test-timings-${ts}`, getComplete(aggregation));
+      const output = argv.json ? JSON.stringify(statsFor(aggregation.all), null, 2) : getComplete(aggregation);
+      fs.writeFileSync(`./test-timings-${ts}`, output);
       printSummary(aggregation);
       log('');
       log(chalk.bold(`Full audit written to file ./test-timings-${ts}`));
