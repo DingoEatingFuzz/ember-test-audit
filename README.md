@@ -10,7 +10,7 @@ npx ember-test-audit <iterations: 1> <filter: ''>
 
 ### JSON output
 
-````
+```
 npx ember-test-audit --json
 ```
 
