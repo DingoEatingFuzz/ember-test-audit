@@ -7,10 +7,28 @@ const { log } = console;
 const { EOL } = require('os');
 const fs = require('fs');
 
+const { argv } = require('yargs')
+  .command('$0 [repetitions] [filter]', 'run the test suite and average its times', yargs => {
+    yargs
+      .positional('repetitions', {
+        describe: 'number of times to run the test suite',
+        default: 1,
+      })
+      .positional('filter', {
+        describe: 'string to filter the tests with',
+        default: '',
+    })
+  })
+  .option('json', {
+    type: 'boolean',
+    description: 'generate report as JSON instead of text',
+  })
+  .help();
+
 function run() {
   const ts = Date.now();
-  const count = process.argv[2] || 1;
-  const filter = process.argv[3] || '';
+  const count = argv.repetitions;
+  const filter = argv.filter;
   // console.log(`Starting. Count: ${count} Filter: "${filter}"`);
 
   // Collect the output of N test runs
@@ -39,7 +57,8 @@ function run() {
     .then(json => {
       json.forEach(addMetadata);
       const aggregation = aggregateTimings(json);
-      fs.writeFileSync(`./test-timings-${ts}`, getComplete(aggregation));
+      const output = argv.json ? JSON.stringify(statsFor(aggregation.all), null, 2) : getComplete(aggregation);
+      fs.writeFileSync(`./test-timings-${ts}`, output);
       printSummary(aggregation);
       log('');
       log(chalk.bold(`Full audit written to file ./test-timings-${ts}`));
