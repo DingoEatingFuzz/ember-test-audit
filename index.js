@@ -11,7 +11,7 @@ const { argv } = require('yargs')
   .command('$0 [repetitions] [filter]', 'run the test suite and average its times', yargs => {
     yargs
       .positional('repetitions', {
-        describe: 'number of times to run the tests suite',
+        describe: 'number of times to run the test suite',
         default: 1,
       })
       .positional('filter', {
