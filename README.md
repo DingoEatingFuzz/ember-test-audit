@@ -25,6 +25,14 @@ This will generate a high-level JSON report with test counts and duration in mil
 }
 ```
 
+### Report output path
+
+You can choose where the report will be generated, otherwise the default is `test-timings-[timestamp]`.
+
+```
+npx ember-test-audit --output report.txt
+```
+
 ## :warning: Alpha software
 
 This worked for my test suite, but it hasn't exactly been battle-hardened yet.

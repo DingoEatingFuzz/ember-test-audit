@@ -23,6 +23,10 @@ const { argv } = require('yargs')
     type: 'boolean',
     description: 'generate report as JSON instead of text',
   })
+  .option('output', {
+    alias: 'o',
+    description: 'what path to write the report to',
+  })
   .help();
 
 function run() {
@@ -58,10 +62,11 @@ function run() {
       json.forEach(addMetadata);
       const aggregation = aggregateTimings(json);
       const output = argv.json ? JSON.stringify(statsFor(aggregation.all), null, 2) : getComplete(aggregation);
-      fs.writeFileSync(`./test-timings-${ts}`, output);
+      const path = argv.output || `./test-timings-${ts}`;
+      fs.writeFileSync(path, output);
       printSummary(aggregation);
       log('');
-      log(chalk.bold(`Full audit written to file ./test-timings-${ts}`));
+      log(chalk.bold(`Full audit written to file ${path}`));
     })
     .catch(err => {
       log('Bad exit: ', err);
