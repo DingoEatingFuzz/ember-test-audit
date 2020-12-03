@@ -187,12 +187,14 @@ function statsFor(tests) {
     passes: 0,
     failures: 0,
     flaky: 0,
+    flakyTestNames: [],
     duration: 0,
   };
 
   tests.forEach(a => {
     if (a.passes > 0 && a.failures > 0) {
       stats.flaky++;
+      stats.flakyTestNames.push(a.name);
     } else if (a.passes > 0) {
       stats.passes++;
     } else {
@@ -221,6 +223,14 @@ function printSummary(aggregation) {
   log(
     chalk.bold(`Total Tests: ${formattedTotalTests}${details} Total Time: ${formattedTotalTime}`)
   );
+
+  if (stats.flakyTestNames.length) {
+    log('');
+    log(chalk.bold('Flaky Tests'));
+    stats.flakyTestNames.forEach(flakyTestName => {
+      log(chalk.gray(flakyTestName));
+    });
+  }
 
   log('');
   log(chalk.bold('Slowest Modules (avg)'));
